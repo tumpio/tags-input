@@ -90,6 +90,15 @@ export default function tagsInput(input) {
 		return false;
 	}
 
+	function caretAtStart(el) {
+		try {
+			return el.selectionStart === 0 && el.selectionEnd === 0;
+		}
+		catch(e) {
+			return el.value === '';
+		}
+	}
+
 	function charFromKeyboardEvent(e) {
 		if ('key' in e) {
 			// most modern browsers
@@ -102,6 +111,7 @@ export default function tagsInput(input) {
 		// other old/non-conforming browsers
 		return e.char;
 	}
+
 	let base = createElement('div', 'tags-input'),
 		sib = input.nextSibling,
 		separator = input.getAttribute('data-separator') || ',';
@@ -111,8 +121,12 @@ export default function tagsInput(input) {
 	input.style.cssText = 'position:absolute;left:0;top:-99px;width:1px;height:1px;opacity:0.01;';
 	input.tabIndex = -1;
 
+	let inputType = input.getAttribute('type');
+	if (!inputType || inputType === 'tags') {
+		inputType = 'text';
+	}
 	base.input = createElement('input');
-	base.input.setAttribute('type', 'text');
+	base.input.setAttribute('type', inputType);
 	COPY_PROPS.forEach( prop => {
 		if (input[prop]!==base.input[prop]) {
 			base.input[prop] = input[prop];
@@ -141,7 +155,7 @@ export default function tagsInput(input) {
 			key = e.keyCode || e.which,
 			char = charFromKeyboardEvent(e),
 			selectedTag = $('.tag.selected'),
-			pos = el.selectionStart===el.selectionEnd && el.selectionStart,
+			atStart = caretAtStart(el),
 			last = $('.tag',true).pop();
 
 
@@ -160,7 +174,7 @@ export default function tagsInput(input) {
 				base.removeChild(selectedTag);
 				save();
 			}
-			else if (last && pos===0) {
+			else if (last && atStart) {
 				select(last);
 			}
 			else {
@@ -173,7 +187,7 @@ export default function tagsInput(input) {
 					select(selectedTag.previousSibling);
 				}
 			}
-			else if (pos!==0) {
+			else if (!atStart) {
 				return;
 			}
 			else {
