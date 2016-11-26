@@ -1,4 +1,17 @@
-require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"tags-input":[function(require,module,exports){
+require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict';
+
+var matchOperatorsRe = /[|\\{}()[\]^$+*?.]/g;
+
+module.exports = function (str) {
+	if (typeof str !== 'string') {
+		throw new TypeError('Expected a string');
+	}
+
+	return str.replace(matchOperatorsRe, '\\$&');
+};
+
+},{}],"tags-input":[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -8,6 +21,13 @@ Object.defineProperty(exports, "__esModule", {
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 exports.default = tagsInput;
+
+var _escapeStringRegexp = require('escape-string-regexp');
+
+var _escapeStringRegexp2 = _interopRequireDefault(_escapeStringRegexp);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 var BACKSPACE = 8,
     TAB = 9,
     ENTER = 13,
@@ -16,6 +36,42 @@ var BACKSPACE = 8,
     DELETE = 46;
 
 var COPY_PROPS = 'placeholder pattern spellcheck autocomplete autocapitalize autofocus accessKey accept lang minLength maxLength required'.split(' ');
+
+function checkerForSeparator(separator) {
+	function simple(separator) {
+		return {
+			split: function split(s) {
+				return s.split(separator);
+			},
+			join: function join(arr) {
+				return arr.join(separator);
+			},
+			test: function test(char) {
+				return char === separator;
+			}
+		};
+	}
+
+	function multi(separators) {
+		var regex = separators.split('').map(_escapeStringRegexp2.default).join('|');
+
+		regex = new RegExp(regex);
+
+		return {
+			split: function split(s) {
+				return s.split(regex);
+			},
+			join: function join(arr) {
+				return arr.join(separators[0]);
+			},
+			test: function test(char) {
+				return regex.test(char);
+			}
+		};
+	}
+
+	return separator.length > 1 ? multi(separator) : simple(separator);
+}
 
 function tagsInput(input) {
 	function createElement(type, name, text, attributes) {
@@ -33,9 +89,10 @@ function tagsInput(input) {
 	}
 
 	function getValue() {
-		return $('.tag', true).map(function (tag) {
+		var value = $('.tag', true).map(function (tag) {
 			return tag.textContent;
-		}).concat(base.input.value || []).join(separator);
+		}).concat(base.input.value || []);
+		return checker.join(value);
 	}
 
 	function setValue(value) {
@@ -52,33 +109,34 @@ function tagsInput(input) {
 
 	// Return false if no need to add a tag
 	function addTag(text) {
-		// Add multiple tags if the user pastes in data with SEPERATOR already in it
-		if (~text.indexOf(separator)) text = text.split(separator);
-		if (Array.isArray(text)) return text.forEach(addTag);
+		function addOneTag(text) {
+			var tag = text && text.trim();
+			// Ignore if text is empty
+			if (!tag) return false;
 
-		var tag = text && text.trim();
-		// Ignore if text is empty
-		if (!tag) return false;
+			// For duplicates, briefly highlight the existing tag
+			if (!input.getAttribute('duplicates')) {
+				var _ret = function () {
+					var exisingTag = $('[data-tag="' + tag + '"]');
+					if (exisingTag) {
+						exisingTag.classList.add('dupe');
+						setTimeout(function () {
+							return exisingTag.classList.remove('dupe');
+						}, 100);
+						return {
+							v: false
+						};
+					}
+				}();
 
-		// For duplicates, briefly highlight the existing tag
-		if (!input.getAttribute('duplicates')) {
-			var _ret = function () {
-				var exisingTag = $('[data-tag="' + tag + '"]');
-				if (exisingTag) {
-					exisingTag.classList.add('dupe');
-					setTimeout(function () {
-						return exisingTag.classList.remove('dupe');
-					}, 100);
-					return {
-						v: false
-					};
-				}
-			}();
+				if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+			}
 
-			if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+			base.insertBefore(createElement('span', 'tag', tag, { tag: tag }), base.input);
 		}
 
-		base.insertBefore(createElement('span', 'tag', tag, { tag: tag }), base.input);
+		// Add multiple tags if the user pastes in data with SEPERATOR already in it
+		checker.split(text).forEach(addOneTag);
 	}
 
 	function select(el) {
@@ -129,7 +187,7 @@ function tagsInput(input) {
 
 	var base = createElement('div', 'tags-input'),
 	    sib = input.nextSibling,
-	    separator = input.getAttribute('data-separator') || ',';
+	    checker = checkerForSeparator(input.getAttribute('data-separator') || ',');
 
 	input.parentNode[sib ? 'insertBefore' : 'appendChild'](base, sib);
 
@@ -170,13 +228,13 @@ function tagsInput(input) {
 	base.input.addEventListener('keydown', function (e) {
 		var el = base.input,
 		    key = e.keyCode || e.which,
-		    char = charFromKeyboardEvent(e),
+		    separator = checker.test(charFromKeyboardEvent(e)),
 		    selectedTag = $('.tag.selected'),
 		    atStart = caretAtStart(el),
 		    last = $('.tag', true).pop();
 
-		if (key === ENTER || key === TAB || char === separator) {
-			if (!el.value && char !== separator) return;
+		if (key === ENTER || key === TAB || separator) {
+			if (!el.value && !separator) return;
 			savePartialInput();
 		} else if (key === DELETE && selectedTag) {
 			if (selectedTag.nextSibling !== base.input) select(selectedTag.nextSibling);
@@ -239,4 +297,4 @@ function tagsInput(input) {
 tagsInput.enhance = tagsInput.tagsInput = tagsInput;
 module.exports = exports['default'];
 
-},{}]},{},[]);
+},{"escape-string-regexp":1}]},{},[]);
