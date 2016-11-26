@@ -7,6 +7,35 @@ const BACKSPACE = 8,
 
 const COPY_PROPS = 'placeholder pattern spellcheck autocomplete autocapitalize autofocus accessKey accept lang minLength maxLength required'.split(' ');
 
+import escapeStringRegexp from 'escape-string-regexp';
+
+function checkerForSeparator(separator) {
+	function simple(separator) {
+		return {
+			split: s => s.split(separator),
+			join: arr => arr.join(separator),
+			test: char => char === separator
+		};
+	}
+
+	function multi(separators) {
+		let regex = separators
+			.split('')
+			.map(escapeStringRegexp)
+			.join('|');
+
+		regex = new RegExp(regex);
+
+		return {
+			split: s => s.split(regex),
+			join: arr => arr.join(separators[0]),
+			test: char => regex.test(char)
+		};
+	}
+
+	return separator.length > 1 ? multi(separator) : simple(separator);
+}
+
 export default function tagsInput(input) {
 	function createElement(type, name, text, attributes) {
 		let el = document.createElement(type);
@@ -23,10 +52,10 @@ export default function tagsInput(input) {
 	}
 
 	function getValue() {
-		return $('.tag', true)
+		let value = $('.tag', true)
 			.map( tag => tag.textContent )
-			.concat(base.input.value || [])
-			.join(separator);
+			.concat(base.input.value || []);
+		return checker.join(value);
 	}
 
 	function setValue(value) {
@@ -41,28 +70,29 @@ export default function tagsInput(input) {
 
 	// Return false if no need to add a tag
 	function addTag(text) {
-		// Add multiple tags if the user pastes in data with SEPERATOR already in it
-		if (~text.indexOf(separator)) text = text.split(separator);
-		if (Array.isArray(text)) return text.forEach(addTag);
+		function addOneTag(text) {
+			let tag = text && text.trim();
+			// Ignore if text is empty
+			if (!tag) return false;
 
-		let tag = text && text.trim();
-		// Ignore if text is empty
-		if (!tag) return false;
-
-		// For duplicates, briefly highlight the existing tag
-		if (!input.getAttribute('duplicates')) {
-			let exisingTag = $(`[data-tag="${tag}"]`);
-			if (exisingTag) {
-				exisingTag.classList.add('dupe');
-				setTimeout( () => exisingTag.classList.remove('dupe') , 100);
-				return false;
+			// For duplicates, briefly highlight the existing tag
+			if (!input.getAttribute('duplicates')) {
+				let exisingTag = $(`[data-tag="${tag}"]`);
+				if (exisingTag) {
+					exisingTag.classList.add('dupe');
+					setTimeout( () => exisingTag.classList.remove('dupe') , 100);
+					return false;
+				}
 			}
+
+			base.insertBefore(
+				createElement('span', 'tag', tag, { tag }),
+				base.input
+			);
 		}
 
-		base.insertBefore(
-			createElement('span', 'tag', tag, { tag }),
-			base.input
-		);
+		// Add multiple tags if the user pastes in data with SEPERATOR already in it
+		checker.split(text).forEach(addOneTag);
 	}
 
 	function select(el) {
@@ -114,7 +144,7 @@ export default function tagsInput(input) {
 
 	let base = createElement('div', 'tags-input'),
 		sib = input.nextSibling,
-		separator = input.getAttribute('data-separator') || ',';
+		checker = checkerForSeparator(input.getAttribute('data-separator') || ',');
 
 	input.parentNode[sib?'insertBefore':'appendChild'](base, sib);
 
@@ -153,14 +183,13 @@ export default function tagsInput(input) {
 	base.input.addEventListener('keydown', e => {
 		let el = base.input,
 			key = e.keyCode || e.which,
-			char = charFromKeyboardEvent(e),
+			separator = checker.test(charFromKeyboardEvent(e)),
 			selectedTag = $('.tag.selected'),
 			atStart = caretAtStart(el),
 			last = $('.tag',true).pop();
 
-
-		if (key===ENTER || key===TAB || char===separator) {
-			if (!el.value && char!==separator) return;
+		if (key===ENTER || key===TAB || separator) {
+			if (!el.value && !separator) return;
 			savePartialInput();
 		}
 		else if (key===DELETE && selectedTag) {
