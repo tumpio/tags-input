@@ -1,28 +1,36 @@
 {
-  "name": "tags-input",
-  "version": "1.1.1",
-  "main": "tags-input.js",
-  "description": "<input type=\"tags\"> like magic.",
+  "name": "code42day-tags-input",
+  "version": "2.0.0-alpha",
+  "main": "src/tags-input.js",
+  "description": "Input field for tagged values",
   "scripts": {
-    "build": "npm run transpile && npm run less && npm run size",
-    "transpile": "babel src --source-root src -s -d .",
-    "less": "lessc --clean-css --source-map --source-map-less-inline --autoprefix=\"last 2 versions\" src/tags-input.less tags-input.css",
-    "size": "echo \"gzip size: $(pretty-bytes $(gzip-size $npm_package_main))\"",
-    "test": "jshint src/**.js",
-    "prepublish": "npm run build",
-    "release": "npm run build && git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && npm publish"
+    "test": "make check",
+    "build": "make"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/developit/tags-input.git"
+    "url": "git://github.com/code42day/tags-input.git"
+  },
+  "browserify": {
+    "transform": [
+      [
+        "babelify", {
+          "presets": ["es2015"],
+          "plugins": ["add-module-exports"]
+        }
+      ]
+    ]
   },
   "devDependencies": {
-    "babel": "^5.8.21",
-    "gzip-size": "^3.0.0",
-    "jshint": "^2.8.0",
-    "less": "^2.5.1",
-    "less-plugin-autoprefix": "^1.4.2",
-    "less-plugin-clean-css": "^1.5.1",
-    "pretty-bytes": "^2.0.1"
-  }
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-preset-es2015": "^6.18.0",
+    "babelify": "^7.3.0",
+    "browserify": "^13.1.1",
+    "jshint": "^2.8.0"
+  },
+  "files": [
+    "src",
+    "tags-input.css"
+  ],
+  "license": "MIT"
 }

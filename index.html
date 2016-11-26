@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<title>Tags input</title>
 	<link rel="stylesheet" type="text/css" href="tags-input.css">
-	<script type="text/javascript" src="tags-input.js"></script>
-	<style type="text/css">
+	<script src="build/build.js"></script>
+	<style>
 		body {
 			padding: 1em 3em;
 		}
@@ -27,8 +28,10 @@
 		<input id='url' type='url' data-separator=' '>
 	</form>
 	<script type="text/javascript">
+		var tagsInput = require('tags-input');
 		for (let input of document.querySelectorAll('form input')) {
 			tagsInput(input);
 		}
 	</script>
 </body>
+</html>
