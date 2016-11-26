@@ -1,9 +1,7 @@
 tags-input
 ==========
 
-[![NPM Version](http://img.shields.io/npm/v/tags-input.svg?style=flat)](https://www.npmjs.org/package/tags-input)
-[![Bower Version](http://img.shields.io/bower/v/tags-input.svg?style=flat)](http://bower.io/search/?q=tags-input)
-[![Gitter Room](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/developit/tags-input)
+[![NPM Version](http://img.shields.io/npm/v/code42day-tags-input.svg?style=flat)](https://www.npmjs.org/package/code42day-tags-input)
 
 **Features:**
 
