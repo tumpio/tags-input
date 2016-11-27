@@ -188,7 +188,6 @@ export default function tagsInput(input) {
 		let el = base.input,
 			key = e.keyCode || e.which,
 			separator = checker.test(charFromKeyboardEvent(e)),
-			atStart = caretAtStart(el),
 			selectedTag = $('.tag.selected'),
 			lastTag = $('.tag:last-of-type');
 
@@ -207,7 +206,7 @@ export default function tagsInput(input) {
 				base.removeChild(selectedTag);
 				save();
 			}
-			else if (lastTag && atStart) {
+			else if (lastTag && caretAtStart(el)) {
 				select(lastTag);
 			}
 			else {
@@ -220,7 +219,7 @@ export default function tagsInput(input) {
 					select(selectedTag.previousSibling);
 				}
 			}
-			else if (!atStart) {
+			else if (!caretAtStart(el)) {
 				return;
 			}
 			else {
