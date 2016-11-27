@@ -188,16 +188,16 @@ export default function tagsInput(input) {
 		let el = base.input,
 			key = e.keyCode || e.which,
 			separator = checker.test(charFromKeyboardEvent(e)),
-			selectedTag = $('.tag.selected'),
 			atStart = caretAtStart(el),
-			last = $('.tag:last-of-type');
+			selectedTag = $('.tag.selected'),
+			lastTag = $('.tag:last-of-type');
 
 		if (key===ENTER || key===TAB || separator) {
 			if (!el.value && !separator) return;
 			savePartialInput();
 		}
 		else if (key===DELETE && selectedTag) {
-			if (selectedTag.nextSibling!==base.input) select(selectedTag.nextSibling);
+			if (selectedTag!==lastTag) select(selectedTag.nextSibling);
 			base.removeChild(selectedTag);
 			save();
 		}
@@ -207,8 +207,8 @@ export default function tagsInput(input) {
 				base.removeChild(selectedTag);
 				save();
 			}
-			else if (last && atStart) {
-				select(last);
+			else if (lastTag && atStart) {
+				select(lastTag);
 			}
 			else {
 				return;
@@ -224,7 +224,7 @@ export default function tagsInput(input) {
 				return;
 			}
 			else {
-				select(last);
+				select(lastTag);
 			}
 		}
 		else if (key===RIGHT) {
