@@ -36,16 +36,45 @@ function checkerForSeparator(separator) {
 	return separator.length > 1 ? multi(separator) : simple(separator);
 }
 
-export default function tagsInput(input) {
-	function createElement(type, name, text, attributes) {
-		let el = document.createElement(type);
-		if (name) el.className = name;
-		if (text) el.textContent = text;
-		for (let key in attributes) {
-			el.setAttribute(`data-${key}`, attributes[key]);
-		}
-		return el;
+function createElement(type, name, text, attributes) {
+	let el = document.createElement(type);
+	if (name) el.className = name;
+	if (text) el.textContent = text;
+	for (let key in attributes) {
+		el.setAttribute(`data-${key}`, attributes[key]);
 	}
+	return el;
+}
+
+function insertAfter(child, el) {
+	return child.nextSibling ?
+		child.parentNode.insertBefore(el, child.nextSibling) :
+		child.parentNode.appendChild(el);
+}
+
+function caretAtStart(el) {
+	try {
+		return el.selectionStart === 0 && el.selectionEnd === 0;
+	}
+	catch(e) {
+		return el.value === '';
+	}
+}
+
+function charFromKeyboardEvent(e) {
+	if ('key' in e) {
+		// most modern browsers
+		return e.key;
+	}
+	if ('keyIdentifier' in e) {
+		// Safari < 10
+		return String.fromCharCode(parseInt(event.keyIdentifier.slice(2), 16));
+	}
+	// other old/non-conforming browsers
+	return e.char;
+}
+
+export default function tagsInput(input) {
 
 	function $(selector) {
 		return base.querySelector(selector);
@@ -124,33 +153,10 @@ export default function tagsInput(input) {
 		return false;
 	}
 
-	function caretAtStart(el) {
-		try {
-			return el.selectionStart === 0 && el.selectionEnd === 0;
-		}
-		catch(e) {
-			return el.value === '';
-		}
-	}
-
-	function charFromKeyboardEvent(e) {
-		if ('key' in e) {
-			// most modern browsers
-			return e.key;
-		}
-		if ('keyIdentifier' in e) {
-			// Safari < 10
-			return String.fromCharCode(parseInt(event.keyIdentifier.slice(2), 16));
-		}
-		// other old/non-conforming browsers
-		return e.char;
-	}
-
 	let base = createElement('div', 'tags-input'),
-		sib = input.nextSibling,
 		checker = checkerForSeparator(input.getAttribute('data-separator') || ',');
 
-	input.parentNode[sib?'insertBefore':'appendChild'](base, sib);
+	insertAfter(input, base);
 
 	input.style.cssText = 'position:absolute;left:0;top:-99px;width:1px;height:1px;opacity:0.01;';
 	input.tabIndex = -1;
