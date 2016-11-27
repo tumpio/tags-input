@@ -47,19 +47,23 @@ export default function tagsInput(input) {
 		return el;
 	}
 
-	function $(selector, all) {
-		return all===true ? Array.prototype.slice.call(base.querySelectorAll(selector)) : base.querySelector(selector);
+	function $(selector) {
+		return base.querySelector(selector);
+	}
+
+	function $$(selector) {
+		return [...base.querySelectorAll(selector)];
 	}
 
 	function getValue() {
-		let value = $('.tag', true)
+		let value = $$('.tag')
 			.map( tag => tag.textContent )
 			.concat(base.input.value || []);
 		return checker.join(value);
 	}
 
 	function setValue(value) {
-		$('.tag', true).forEach( t => base.removeChild(t) );
+		$$('.tag').forEach( t => base.removeChild(t) );
 		savePartialInput(value);
 	}
 
@@ -186,7 +190,7 @@ export default function tagsInput(input) {
 			separator = checker.test(charFromKeyboardEvent(e)),
 			selectedTag = $('.tag.selected'),
 			atStart = caretAtStart(el),
-			last = $('.tag',true).pop();
+			last = $('.tag:last-of-type');
 
 		if (key===ENTER || key===TAB || separator) {
 			if (!el.value && !separator) return;
