@@ -101,6 +101,13 @@ export default function tagsInput(input) {
 		input.dispatchEvent(new Event('change'));
 	}
 
+	function checkAllowDuplicates() {
+		const allow =
+			input.getAttribute('data-allow-duplicates') ||
+			input.getAttribute('duplicates');
+		return allow === 'on' || allow === '1' || allow === 'true';
+	}
+
 	// Return false if no need to add a tag
 	function addTag(text) {
 		function addOneTag(text) {
@@ -109,7 +116,7 @@ export default function tagsInput(input) {
 			if (!tag) return false;
 
 			// For duplicates, briefly highlight the existing tag
-			if (!input.getAttribute('duplicates')) {
+			if (!allowDuplicates) {
 				let exisingTag = $(`[data-tag="${tag}"]`);
 				if (exisingTag) {
 					exisingTag.classList.add('dupe');
@@ -153,8 +160,9 @@ export default function tagsInput(input) {
 		return false;
 	}
 
-	let base = createElement('div', 'tags-input'),
-		checker = checkerForSeparator(input.getAttribute('data-separator') || ',');
+	const base = createElement('div', 'tags-input'),
+		checker = checkerForSeparator(input.getAttribute('data-separator') || ','),
+		allowDuplicates = checkAllowDuplicates();
 
 	insertAfter(input, base);
 

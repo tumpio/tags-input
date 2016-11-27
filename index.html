@@ -22,8 +22,17 @@
 	<form>
 		<label for='simple'>Simple</label>
 		<input id='simple' type='text'>
+		<label for='dups'>Duplicates allowed</label>
+		<input id='dups' type='text'
+			data-separator='.:'
+			data-allow-duplicates='true'
+			placeholder="dot and colon as separators"
+		>
 		<label for='email'>Email</label>
-		<input id='email' type='email' data-separator=' ,;' placeholder="space, comma, or semicolon">
+		<input id='email' type='email'
+			data-separator=' ,;'
+			placeholder="space, comma, or semicolon"
+		>
 		<label for='url'>URL</label>
 		<input id='url' type='url' data-separator=' '>
 	</form>
