@@ -2,6 +2,7 @@
 <html>
 <head>
 	<title>Tags input</title>
+	<meta name="viewport" content="width=device-width">
 	<link rel="stylesheet" type="text/css" href="tags-input.css">
 	<script src="build/build.js"></script>
 	<style>
@@ -15,6 +16,9 @@
 		.tags-input {
 			width: 100%;
 			margin: .5em 0;
+		}
+		.tags-input input {
+			min-width: 5em;
 		}
 		.value {
 			display: block;
@@ -31,7 +35,7 @@
 <body>
 	<form>
 		<label for='simple'>Simple</label>
-		<input id='simple' type='text'>
+		<input id='simple' type='text' value='tag1,tag33'>
 		<span class='value'></span>
 		<label for='dups'>Duplicates allowed</label>
 		<input id='dups' type='text'
