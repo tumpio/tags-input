@@ -74,6 +74,10 @@ function charFromKeyboardEvent(e) {
 	return e.char;
 }
 
+const eachNode = 'forEach' in NodeList.prototype ?
+	(nodeList, fn) => nodeList.forEach(fn) :
+	(nodeList, fn) => { for(let i = 0; i < nodeList.length; i++) fn(nodeList[i]); };
+
 export default function tagsInput(input) {
 
 	function $(selector) {
@@ -81,18 +85,18 @@ export default function tagsInput(input) {
 	}
 
 	function $$(selector) {
-		return [...base.querySelectorAll(selector)];
+		return base.querySelectorAll(selector);
 	}
 
 	function getValue() {
-		let value = $$('.tag')
-			.map( tag => tag.textContent )
-			.concat(base.input.value || []);
+		let value = [];
+		if (base.input.value) value.push(base.input.value);
+		eachNode($$('.tag'), t => value.push(t.textContent));
 		return checker.join(value);
 	}
 
 	function setValue(value) {
-		$$('.tag').forEach( t => base.removeChild(t) );
+		eachNode($$('.tag'), t => base.removeChild(t));
 		savePartialInput(value);
 	}
 
