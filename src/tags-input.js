@@ -39,7 +39,10 @@ export default function tagsInput(input) {
 
 	function save() {
 		input.value = getValue();
-		input.dispatchEvent(new Event('change'));
+		// HACK: dispatchEvent can throw on FF when input is not in DOM
+		try {
+			input.dispatchEvent(new Event('change'));
+		} catch(e) {}
 	}
 
 	// Return false if no need to add a tag
