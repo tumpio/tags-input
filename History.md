@@ -1,4 +1,9 @@
 
+2.1.1 / 2016-12-02
+==================
+
+ * add workaround for FF input.dispatchEvent bug
+
 2.1.0 / 2016-11-26
 ==================
 
