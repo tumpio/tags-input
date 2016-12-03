@@ -1,6 +1,6 @@
 {
   "name": "code42day-tags-input",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "main": "src/tags-input.js",
   "description": "Input field for tagged values",
   "scripts": {
