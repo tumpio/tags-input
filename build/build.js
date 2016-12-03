@@ -73,30 +73,70 @@ function checkerForSeparator(separator) {
 	return separator.length > 1 ? multi(separator) : simple(separator);
 }
 
+function createElement(type, name, text, attributes) {
+	var el = document.createElement(type);
+	if (name) el.className = name;
+	if (text) el.textContent = text;
+	for (var key in attributes) {
+		el.setAttribute('data-' + key, attributes[key]);
+	}
+	return el;
+}
+
+function insertAfter(child, el) {
+	return child.nextSibling ? child.parentNode.insertBefore(el, child.nextSibling) : child.parentNode.appendChild(el);
+}
+
+function caretAtStart(el) {
+	try {
+		return el.selectionStart === 0 && el.selectionEnd === 0;
+	} catch (e) {
+		return el.value === '';
+	}
+}
+
+function charFromKeyboardEvent(e) {
+	if ('key' in e) {
+		// most modern browsers
+		return e.key;
+	}
+	if ('keyIdentifier' in e) {
+		// Safari < 10
+		return String.fromCharCode(parseInt(event.keyIdentifier.slice(2), 16));
+	}
+	// other old/non-conforming browsers
+	return e.char;
+}
+
+var eachNode = 'forEach' in NodeList.prototype ? function (nodeList, fn) {
+	return nodeList.forEach(fn);
+} : function (nodeList, fn) {
+	for (var i = 0; i < nodeList.length; i++) {
+		fn(nodeList[i]);
+	}
+};
+
 function tagsInput(input) {
-	function createElement(type, name, text, attributes) {
-		var el = document.createElement(type);
-		if (name) el.className = name;
-		if (text) el.textContent = text;
-		for (var key in attributes) {
-			el.setAttribute('data-' + key, attributes[key]);
-		}
-		return el;
+
+	function $(selector) {
+		return base.querySelector(selector);
 	}
 
-	function $(selector, all) {
-		return all === true ? Array.prototype.slice.call(base.querySelectorAll(selector)) : base.querySelector(selector);
+	function $$(selector) {
+		return base.querySelectorAll(selector);
 	}
 
 	function getValue() {
-		var value = $('.tag', true).map(function (tag) {
-			return tag.textContent;
-		}).concat(base.input.value || []);
+		var value = [];
+		if (base.input.value) value.push(base.input.value);
+		eachNode($$('.tag'), function (t) {
+			return value.push(t.textContent);
+		});
 		return checker.join(value);
 	}
 
 	function setValue(value) {
-		$('.tag', true).forEach(function (t) {
+		eachNode($$('.tag'), function (t) {
 			return base.removeChild(t);
 		});
 		savePartialInput(value);
@@ -104,7 +144,15 @@ function tagsInput(input) {
 
 	function save() {
 		input.value = getValue();
-		input.dispatchEvent(new Event('change'));
+		// HACK: dispatchEvent can throw on FF when input is not in DOM
+		try {
+			input.dispatchEvent(new Event('change'));
+		} catch (e) {}
+	}
+
+	function checkAllowDuplicates() {
+		var allow = input.getAttribute('data-allow-duplicates') || input.getAttribute('duplicates');
+		return allow === 'on' || allow === '1' || allow === 'true';
 	}
 
 	// Return false if no need to add a tag
@@ -115,7 +163,7 @@ function tagsInput(input) {
 			if (!tag) return false;
 
 			// For duplicates, briefly highlight the existing tag
-			if (!input.getAttribute('duplicates')) {
+			if (!allowDuplicates) {
 				var _ret = function () {
 					var exisingTag = $('[data-tag="' + tag + '"]');
 					if (exisingTag) {
@@ -164,32 +212,11 @@ function tagsInput(input) {
 		return false;
 	}
 
-	function caretAtStart(el) {
-		try {
-			return el.selectionStart === 0 && el.selectionEnd === 0;
-		} catch (e) {
-			return el.value === '';
-		}
-	}
-
-	function charFromKeyboardEvent(e) {
-		if ('key' in e) {
-			// most modern browsers
-			return e.key;
-		}
-		if ('keyIdentifier' in e) {
-			// Safari < 10
-			return String.fromCharCode(parseInt(event.keyIdentifier.slice(2), 16));
-		}
-		// other old/non-conforming browsers
-		return e.char;
-	}
-
 	var base = createElement('div', 'tags-input'),
-	    sib = input.nextSibling,
-	    checker = checkerForSeparator(input.getAttribute('data-separator') || ',');
+	    checker = checkerForSeparator(input.getAttribute('data-separator') || ','),
+	    allowDuplicates = checkAllowDuplicates();
 
-	input.parentNode[sib ? 'insertBefore' : 'appendChild'](base, sib);
+	insertAfter(input, base);
 
 	input.style.cssText = 'position:absolute;left:0;top:-99px;width:1px;height:1px;opacity:0.01;';
 	input.tabIndex = -1;
@@ -230,14 +257,13 @@ function tagsInput(input) {
 		    key = e.keyCode || e.which,
 		    separator = checker.test(charFromKeyboardEvent(e)),
 		    selectedTag = $('.tag.selected'),
-		    atStart = caretAtStart(el),
-		    last = $('.tag', true).pop();
+		    lastTag = $('.tag:last-of-type');
 
 		if (key === ENTER || key === TAB || separator) {
 			if (!el.value && !separator) return;
 			savePartialInput();
 		} else if (key === DELETE && selectedTag) {
-			if (selectedTag.nextSibling !== base.input) select(selectedTag.nextSibling);
+			if (selectedTag !== lastTag) select(selectedTag.nextSibling);
 			base.removeChild(selectedTag);
 			save();
 		} else if (key === BACKSPACE) {
@@ -245,8 +271,8 @@ function tagsInput(input) {
 				select(selectedTag.previousSibling);
 				base.removeChild(selectedTag);
 				save();
-			} else if (last && atStart) {
-				select(last);
+			} else if (lastTag && caretAtStart(el)) {
+				select(lastTag);
 			} else {
 				return;
 			}
@@ -255,10 +281,10 @@ function tagsInput(input) {
 				if (selectedTag.previousSibling) {
 					select(selectedTag.previousSibling);
 				}
-			} else if (!atStart) {
+			} else if (!caretAtStart(el)) {
 				return;
 			} else {
-				select(last);
+				select(lastTag);
 			}
 		} else if (key === RIGHT) {
 			if (!selectedTag) return;
