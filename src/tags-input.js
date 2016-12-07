@@ -97,11 +97,14 @@ export default function tagsInput(input) {
 
 	function setValue(value) {
 		eachNode($$('.tag'), t => base.removeChild(t));
-		savePartialInput(value);
+		savePartialInput(value, true);
 	}
 
-	function save() {
+	function save(init) {
 		input.value = getValue();
+		if (init) {
+		    return;
+		}
 		// HACK: dispatchEvent can throw on FF when input is not in DOM
 		try {
 			input.dispatchEvent(new Event('change'));
@@ -148,14 +151,14 @@ export default function tagsInput(input) {
 		if (el) el.classList.add('selected');
 	}
 
-	function savePartialInput(value) {
+	function savePartialInput(value, init) {
 		if (typeof value!=='string' && !Array.isArray(value)) {
 			// If the base input does not contain a value, default to the original element passed
 			value = base.input.value;
 		}
 		if (addTag(value)!==false) {
 			base.input.value = '';
-			save();
+			save(init);
 		}
 	}
 
@@ -276,7 +279,7 @@ export default function tagsInput(input) {
 	base.getValue = getValue;
 
 	// Add tags for existing values
-	savePartialInput(input.value);
+	savePartialInput(input.value, true);
 }
 
 // make life easier:
