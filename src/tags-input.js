@@ -97,15 +97,15 @@ export default function tagsInput(input) {
 
 	function setValue(value) {
 		eachNode($$('.tag'), t => base.removeChild(t));
-		savePartialInput(value);
+		savePartialInput(value, true);
 	}
 
-	function save() {
+	function save(init) {
 		input.value = getValue();
-		// HACK: dispatchEvent can throw on FF when input is not in DOM
-		try {
-			input.dispatchEvent(new Event('change'));
-		} catch(e) {}
+		if (init) {
+		    return;
+		}
+		input.dispatchEvent(new Event('change'));
 	}
 
 	function checkAllowDuplicates() {
@@ -117,10 +117,11 @@ export default function tagsInput(input) {
 
 	// Return false if no need to add a tag
 	function addTag(text) {
+	    var added = false;
 		function addOneTag(text) {
 			let tag = text && text.trim();
 			// Ignore if text is empty
-			if (!tag) return false;
+			if (!tag) return;
 
 			// For duplicates, briefly highlight the existing tag
 			if (!allowDuplicates) {
@@ -128,7 +129,7 @@ export default function tagsInput(input) {
 				if (exisingTag) {
 					exisingTag.classList.add('dupe');
 					setTimeout( () => exisingTag.classList.remove('dupe') , 100);
-					return false;
+					return;
 				}
 			}
 
@@ -136,10 +137,12 @@ export default function tagsInput(input) {
 				createElement('span', 'tag', tag, { tag }),
 				base.input
 			);
+			added = true;
 		}
 
 		// Add multiple tags if the user pastes in data with SEPERATOR already in it
 		checker.split(text).forEach(addOneTag);
+		return added;
 	}
 
 	function select(el) {
@@ -148,14 +151,14 @@ export default function tagsInput(input) {
 		if (el) el.classList.add('selected');
 	}
 
-	function savePartialInput(value) {
+	function savePartialInput(value, init) {
 		if (typeof value!=='string' && !Array.isArray(value)) {
 			// If the base input does not contain a value, default to the original element passed
 			value = base.input.value;
 		}
 		if (addTag(value)!==false) {
 			base.input.value = '';
-			save();
+			save(init);
 		}
 	}
 
@@ -276,7 +279,7 @@ export default function tagsInput(input) {
 	base.getValue = getValue;
 
 	// Add tags for existing values
-	savePartialInput(input.value);
+	savePartialInput(input.value, true);
 }
 
 // make life easier:
