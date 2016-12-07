@@ -117,10 +117,11 @@ export default function tagsInput(input) {
 
 	// Return false if no need to add a tag
 	function addTag(text) {
+	    var added = false;
 		function addOneTag(text) {
 			let tag = text && text.trim();
 			// Ignore if text is empty
-			if (!tag) return false;
+			if (!tag) return;
 
 			// For duplicates, briefly highlight the existing tag
 			if (!allowDuplicates) {
@@ -128,7 +129,7 @@ export default function tagsInput(input) {
 				if (exisingTag) {
 					exisingTag.classList.add('dupe');
 					setTimeout( () => exisingTag.classList.remove('dupe') , 100);
-					return false;
+					return;
 				}
 			}
 
@@ -136,10 +137,12 @@ export default function tagsInput(input) {
 				createElement('span', 'tag', tag, { tag }),
 				base.input
 			);
+			added = true;
 		}
 
 		// Add multiple tags if the user pastes in data with SEPERATOR already in it
 		checker.split(text).forEach(addOneTag);
+		return added;
 	}
 
 	function select(el) {
