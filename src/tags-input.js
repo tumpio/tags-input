@@ -105,10 +105,7 @@ export default function tagsInput(input) {
 		if (init) {
 		    return;
 		}
-		// HACK: dispatchEvent can throw on FF when input is not in DOM
-		try {
-			input.dispatchEvent(new Event('change'));
-		} catch(e) {}
+		input.dispatchEvent(new Event('change'));
 	}
 
 	function checkAllowDuplicates() {
