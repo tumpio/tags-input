@@ -1,4 +1,11 @@
 
+2.1.3 / 2016-12-06
+==================
+
+ * fix unnecessary saving when no new tag was added
+ * no need for workaround for FF input.dispatchEvent bug
+ * don't dispatch 'change' event when input field is merely being initialized
+
 2.1.2 / 2016-12-02
 ==================
 
