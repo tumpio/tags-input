@@ -1,5 +1,5 @@
 {
-  "name": "code42day-tags-input",
+  "name": "@pirxpilot/tags-input",
   "version": "2.1.3",
   "main": "src/tags-input.js",
   "description": "Input field for tagged values",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/code42day/tags-input.git"
+    "url": "git://github.com/pirxpilot/tags-input.git"
   },
   "browserify": {
     "transform": [

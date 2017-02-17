@@ -1,7 +1,7 @@
 [![NPM version][npm-image]][npm-url]
 [![Dependency Status][gemnasium-image]][gemnasium-url]
 
-# code42day-tags-input
+# @pirxpilot/tags-input
 
 HTML input component that allows for simplified adding and removing tags, emails, urls etc.
 Click [**here**][demo] to see the demo.
@@ -40,7 +40,7 @@ Component can be configured through `dataset` attributes:
 	<input id='url' type='url' data-separator=' '>
 </form>
 <script type="text/javascript">
-	var tagsInput = require('tags-input');
+	var tagsInput = require('@pirxpilot/tags-input');
 	for (let input of document.querySelectorAll('form input')) {
 		tagsInput(input);
 	}
@@ -54,16 +54,16 @@ More detailed example can be found in [index.html][example]
 MIT Copyright (c) 2014 Jason Miller
 
 [tags-input]: https://github.com/developit/tags-input
-[demo]: https://code42day.github.io/tags-input
-[example]: https://raw.githubusercontent.com/code42day/tags-input/gh-pages/index.html
+[demo]: https://pirxpilot.github.io/tags-input
+[example]: https://raw.githubusercontent.com/pirxpilot/tags-input/gh-pages/index.html
 [change-event]: https://developer.mozilla.org/en-US/docs/Web/Events/change
 [input-event]: https://developer.mozilla.org/en-US/docs/Web/Events/input
 
-[npm-image]: https://img.shields.io/npm/v/code42day-tags-input.svg
-[npm-url]: https://npmjs.org/package/code42day-tags-input
+[npm-image]: https://img.shields.io/npm/v/@pirxpilot/tags-input.svg
+[npm-url]: https://npmjs.org/package/@pirxpilot/tags-input
 
-[travis-url]: https://travis-ci.org/code42day/tags-input
-[travis-image]: https://img.shields.io/travis/code42day/tags-input.svg
+[travis-url]: https://travis-ci.org/pirxpilot/tags-input
+[travis-image]: https://img.shields.io/travis/pirxpilot/tags-input.svg
 
-[gemnasium-image]: https://img.shields.io/gemnasium/code42day/tags-input.svg
-[gemnasium-url]: https://gemnasium.com/code42day/tags-input
+[gemnasium-image]: https://img.shields.io/gemnasium/pirxpilot/tags-input.svg
+[gemnasium-url]: https://gemnasium.com/pirxpilot/tags-input
