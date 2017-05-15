@@ -1,4 +1,10 @@
 
+2.1.5 / 2017-05-15
+==================
+
+ * transpile ES2015 to ES5 before publishing
+ * switch from babel to buble
+
 2.1.4 / 2017-02-17
 ==================
 
