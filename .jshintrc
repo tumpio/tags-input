@@ -2,5 +2,6 @@
   "undef": true,
   "unused": true,
   "esnext": true,
-  "browser": true
+  "browser": true,
+  "node": true
 }
