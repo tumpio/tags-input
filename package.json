@@ -1,43 +1,28 @@
 {
   "name": "@pirxpilot/tags-input",
   "version": "2.1.4",
-  "main": "src/tags-input.js",
+  "main": "src.es5/tags-input.js",
   "description": "Input field for tagged values",
   "scripts": {
     "test": "make check",
-    "build": "make"
+    "build": "make",
+    "prepublish": "make transpile"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/pirxpilot/tags-input.git"
   },
-  "browserify": {
-    "transform": [
-      [
-        "babelify",
-        {
-          "presets": [
-            "es2015"
-          ],
-          "plugins": [
-            "add-module-exports"
-          ]
-        }
-      ]
-    ]
-  },
+  "browserify": {},
   "dependencies": {
     "escape-string-regexp": "^1.0.5"
   },
   "devDependencies": {
-    "babel-plugin-add-module-exports": "^0.2.1",
-    "babel-preset-es2015": "^6.18.0",
-    "babelify": "^7.3.0",
     "browserify": "^13.1.1",
+    "buble": "^0.15.2",
     "jshint": "^2.8.0"
   },
   "files": [
-    "src",
+    "src.es5",
     "tags-input.css"
   ],
   "license": "MIT"

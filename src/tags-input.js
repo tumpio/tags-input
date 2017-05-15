@@ -1,3 +1,7 @@
+const escapeStringRegexp = require('escape-string-regexp');
+
+module.exports = tagsInput;
+
 const BACKSPACE = 8,
 	TAB = 9,
 	ENTER = 13,
@@ -6,8 +10,6 @@ const BACKSPACE = 8,
 	DELETE = 46;
 
 const COPY_PROPS = 'placeholder pattern spellcheck autocomplete autocapitalize autofocus accessKey accept lang minLength maxLength required'.split(' ');
-
-import escapeStringRegexp from 'escape-string-regexp';
 
 function checkerForSeparator(separator) {
 	function simple(separator) {
@@ -78,7 +80,7 @@ const eachNode = 'forEach' in NodeList.prototype ?
 	(nodeList, fn) => nodeList.forEach(fn) :
 	(nodeList, fn) => { for(let i = 0; i < nodeList.length; i++) fn(nodeList[i]); };
 
-export default function tagsInput(input) {
+function tagsInput(input) {
 
 	function $(selector) {
 		return base.querySelector(selector);
