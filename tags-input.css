@@ -53,3 +53,8 @@
 .tags-input .selected ~ input {
   opacity: 0.3;
 }
+
+.tags-input.error input {
+	color: #a94442;
+	text-decoration: underline;
+}

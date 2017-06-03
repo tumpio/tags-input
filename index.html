@@ -53,6 +53,11 @@
 		<label for='url'>URL</label>
 		<input id='url' type='url' data-separator=' '>
 		<span class='value'></span>
+		<label for='pattern'>Pattern support</label>
+		<input id='pattern' type='text'
+			   pattern="[A-Za-z]{3}"
+			   placeholder="Enter three letter country code">
+		<span class='value'></span>
 	</form>
 	<script type="text/javascript">
 		var tagsInput = require('tags-input');

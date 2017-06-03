@@ -125,6 +125,15 @@ function tagsInput(input) {
 			// Ignore if text is empty
 			if (!tag) return;
 
+			// Check input validity (eg, for pattern=)
+			// At tags-input init fill the base.input
+			base.input.value = text;
+			if (!base.input.checkValidity()) {
+				base.classList.add('error');
+				setTimeout( () => base.classList.remove('error') , 150);
+				return;
+			}
+
 			// For duplicates, briefly highlight the existing tag
 			if (!allowDuplicates) {
 				let exisingTag = $(`[data-tag="${tag}"]`);
