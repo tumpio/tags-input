@@ -1,6 +1,6 @@
 {
   "name": "@pirxpilot/tags-input",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "main": "src.es5/tags-input.js",
   "description": "Input field for tagged values",
   "scripts": {
