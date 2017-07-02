@@ -9,7 +9,7 @@ const BACKSPACE = 8,
 	RIGHT = 39,
 	DELETE = 46;
 
-const COPY_PROPS = 'placeholder pattern spellcheck autocomplete autocapitalize autofocus accessKey accept lang minLength maxLength required'.split(' ');
+const COPY_PROPS = 'placeholder pattern spellcheck autocomplete autocapitalize autofocus accessKey accept lang minLength maxLength'.split(' ');
 
 function checkerForSeparator(separator) {
 	function simple(separator) {
