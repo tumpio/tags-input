@@ -9,7 +9,26 @@ const BACKSPACE = 8,
 	RIGHT = 39,
 	DELETE = 46;
 
-const COPY_PROPS = 'placeholder pattern spellcheck autocomplete autocapitalize autofocus accessKey accept lang minLength maxLength'.split(' ');
+const COPY_PROPS = ['autocomplete', 'disabled', 'readonly', 'type'];
+const MOVE_PROPS = [
+	'accept',
+	'autocapitalize',
+	'autofocus',
+	'inputmode',
+	'lang',
+	'list',
+	'max',
+	'maxlength',
+	'min',
+	'minlength',
+	'pattern',
+	'placeholder',
+	'size',
+	'spellcheck',
+	'step',
+	'tabindex',
+	'value'
+];
 
 function checkerForSeparator(separator) {
 	function simple(separator) {
@@ -186,23 +205,28 @@ function tagsInput(input) {
 		allowDuplicates = checkAllowDuplicates();
 
 	insertAfter(input, base);
-
-	input.style.cssText = 'position:absolute;left:0;top:-99px;width:1px;height:1px;opacity:0.01;';
-	input.tabIndex = -1;
+	base.appendChild(input);
 
 	let inputType = input.getAttribute('type');
 	if (!inputType || inputType === 'tags') {
-		inputType = 'text';
+		input.setAttribute('type', 'text');
 	}
 	base.input = createElement('input');
-	base.input.setAttribute('type', inputType);
 	COPY_PROPS.forEach( prop => {
-		if (input[prop]!==base.input[prop]) {
-			base.input[prop] = input[prop];
-			try { delete input[prop]; }catch(e){}
+		if (input.hasAttribute(prop)) {
+			base.input.setAttribute(prop, input.getAttribute(prop));
+		}
+	});
+	MOVE_PROPS.forEach( prop => {
+		if (input.hasAttribute(prop)) {
+			base.input.setAttribute(prop, input.getAttribute(prop));
+			input.removeAttribute(prop);
 		}
 	});
 	base.appendChild(base.input);
+
+	input.setAttribute('type', 'text');
+	input.tabIndex = -1;
 
 	input.addEventListener('focus', () => {
 		base.input.focus();
