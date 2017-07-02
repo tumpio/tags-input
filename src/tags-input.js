@@ -12,8 +12,10 @@ const BACKSPACE = 8,
 const COPY_PROPS = ['autocomplete', 'disabled', 'readonly', 'type'];
 const MOVE_PROPS = [
 	'accept',
+	'accesskey',
 	'autocapitalize',
 	'autofocus',
+	'dir',
 	'inputmode',
 	'lang',
 	'list',
@@ -27,6 +29,7 @@ const MOVE_PROPS = [
 	'spellcheck',
 	'step',
 	'tabindex',
+	'title',
 	'value'
 ];
 
