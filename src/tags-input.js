@@ -65,7 +65,9 @@ function createElement(type, name, text, attributes) {
 	if (name) el.className = name;
 	if (text) el.textContent = text;
 	for (let key in attributes) {
-		el.setAttribute(`data-${key}`, attributes[key]);
+		if (attributes.hasOwnProperty(key)) {
+			el.setAttribute(key, attributes[key]);
+		}
 	}
 	return el;
 }
@@ -139,9 +141,16 @@ function tagsInput(input) {
 		return allow === 'on' || allow === '1' || allow === 'true';
 	}
 
+	function checkEditableTags() {
+		const allow =
+			input.getAttribute('data-editable-tags') ||
+			input.getAttribute('editable');
+		return allow === 'on' || allow === '1' || allow === 'true';
+	}
+
 	// Return false if no need to add a tag
 	function addTag(text) {
-	    var added = false;
+	    let added = false;
 		function addOneTag(text) {
 			let tag = text && text.trim();
 			// Ignore if text is empty
@@ -166,8 +175,13 @@ function tagsInput(input) {
 				}
 			}
 
+			let tagAttributes = {'data-tag': tag};
+			if (editableTags) {
+				tagAttributes.contenteditable = true;
+			}
+
 			base.insertBefore(
-				createElement('span', 'tag', tag, { tag }),
+				createElement('span', 'tag', tag, tagAttributes),
 				base.input
 			);
 			added = true;
@@ -192,12 +206,17 @@ function tagsInput(input) {
 		if (addTag(value)!==false) {
 			base.input.value = '';
 			save(init);
+			return true;
 		}
+		return false;
 	}
 
 	function refocus(e) {
 		base.input.focus();
-		if (e.target.classList.contains('tag')) select(e.target);
+		if (e.target.classList.contains('tag')) {
+			select(e.target);
+			if (editableTags) return;
+		}
 		if (e.target===base.input) return select();
 		e.preventDefault();
 		return false;
@@ -205,7 +224,8 @@ function tagsInput(input) {
 
 	const base = createElement('div', 'tags-input'),
 		checker = checkerForSeparator(input.getAttribute('data-separator') || ','),
-		allowDuplicates = checkAllowDuplicates();
+		allowDuplicates = checkAllowDuplicates(),
+		editableTags = checkEditableTags();
 
 	insertAfter(input, base);
 	base.appendChild(input);
@@ -312,6 +332,30 @@ function tagsInput(input) {
 
 	base.addEventListener('mousedown', refocus);
 	base.addEventListener('touchstart', refocus);
+
+	if (editableTags) {
+		base.addEventListener('keydown', function (e) {
+			if (e.target.classList.contains('tag')) {
+				let key = e.keyCode || e.which,
+					separator = checker.test(charFromKeyboardEvent(e)),
+					editedTag = e.target;
+				if (key === ENTER || key === TAB || separator) {
+					if (editedTag.textContent) {
+						if (savePartialInput(editedTag.textContent)) {
+							let inserted = base.querySelector('.tag:last-of-type');
+							base.replaceChild(inserted, editedTag);
+						} else {
+							base.input.value = '';
+							editedTag.classList.add('dupe');
+							setTimeout(() => editedTag.classList.remove('dupe'), 100);
+						}
+					}
+					e.preventDefault();
+					return false;
+				}
+			}
+		});
+	}
 
 	base.setValue = setValue;
 	base.getValue = getValue;
