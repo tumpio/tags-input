@@ -193,9 +193,9 @@ function tagsInput(input) {
 	}
 
 	function refocus(e) {
+		base.input.focus();
 		if (e.target.classList.contains('tag')) select(e.target);
 		if (e.target===base.input) return select();
-		base.input.focus();
 		e.preventDefault();
 		return false;
 	}
