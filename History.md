@@ -1,4 +1,9 @@
 
+2.1.7 / 2017-07-19
+==================
+
+ * improve support for `pattern` and other validation attributes 
+
 2.1.6 / 2017-06-03
 ==================
 
