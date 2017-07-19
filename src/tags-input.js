@@ -9,7 +9,9 @@ const BACKSPACE = 8,
 	RIGHT = 39,
 	DELETE = 46;
 
-const COPY_PROPS = 'placeholder pattern spellcheck autocomplete autocapitalize autofocus accessKey accept lang minLength maxLength required'.split(' ');
+const COPY_PROPS = ['autocomplete', 'disabled', 'readonly', 'type'];
+const MOVE_PROPS = ['accept', 'accesskey', 'autocapitalize', 'autofocus', 'dir', 'inputmode', 'lang', 'list', 'max',
+	'maxlength', 'min', 'minlength', 'pattern', 'placeholder', 'size', 'spellcheck', 'step', 'tabindex', 'title'];
 
 function checkerForSeparator(separator) {
 	function simple(separator) {
@@ -174,9 +176,9 @@ function tagsInput(input) {
 	}
 
 	function refocus(e) {
+		base.input.focus();
 		if (e.target.classList.contains('tag')) select(e.target);
 		if (e.target===base.input) return select();
-		base.input.focus();
 		e.preventDefault();
 		return false;
 	}
@@ -186,23 +188,28 @@ function tagsInput(input) {
 		allowDuplicates = checkAllowDuplicates();
 
 	insertAfter(input, base);
-
-	input.style.cssText = 'position:absolute;left:0;top:-99px;width:1px;height:1px;opacity:0.01;';
-	input.tabIndex = -1;
+	base.appendChild(input);
 
 	let inputType = input.getAttribute('type');
 	if (!inputType || inputType === 'tags') {
-		inputType = 'text';
+		input.setAttribute('type', 'text');
 	}
 	base.input = createElement('input');
-	base.input.setAttribute('type', inputType);
-	COPY_PROPS.forEach( prop => {
-		if (input[prop]!==base.input[prop]) {
-			base.input[prop] = input[prop];
-			try { delete input[prop]; }catch(e){}
+	COPY_PROPS.forEach(prop => {
+		if (input.hasAttribute(prop)) {
+			base.input.setAttribute(prop, input.getAttribute(prop));
+		}
+	});
+	MOVE_PROPS.forEach(prop => {
+		if (input.hasAttribute(prop)) {
+			base.input.setAttribute(prop, input.getAttribute(prop));
+			input.removeAttribute(prop);
 		}
 	});
 	base.appendChild(base.input);
+
+	input.setAttribute('type', 'text');
+	input.tabIndex = -1;
 
 	input.addEventListener('focus', () => {
 		base.input.focus();
