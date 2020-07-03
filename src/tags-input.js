@@ -12,6 +12,7 @@ export class TagsInput {
         this.root.className = "tags-input";
         this.tags.className = "tags";
         this.checker = checkerForSeparator(input.getAttribute("data-separator"));
+        this.baseInput = input;
 
         copyAttributes(input, this.input);
 
@@ -101,6 +102,7 @@ export class TagsInput {
         }
 
         this.tags.appendChild(fragment);
+        this.baseInput.value = tags.join();
     }
 
     get disabled() {
@@ -222,7 +224,6 @@ export class TagsInput {
         } else if (key === KEY_ENTER || separator) {
             this.saveInput();
         } else if (key === KEY_DELETE && selectedTag) {
-            if (selectedTag !== lastTag) this.select(selectedTag.nextSibling);
             this.tags.removeChild(selectedTag);
             this.notify();
         } else if (key === KEY_LEFT) {
@@ -258,6 +259,7 @@ export class TagsInput {
     }
 
     notify() {
+        this.baseInput.value = this.checker.join(this.value);
         this.input.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
