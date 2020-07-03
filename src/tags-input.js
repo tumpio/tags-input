@@ -1,205 +1,250 @@
-const matchOperatorsRe = /[|\\{}()[\]^$+*?.]/g;
+const KEY_ENTER = 13,
+    KEY_ESC = 27,
+    KEY_LEFT = 37,
+    KEY_RIGHT = 39,
+    KEY_DELETE = 46;
 
-const escapeStringRegexp = function (str) {
-    return str.replace(matchOperatorsRe, "\\$&");
-};
+export class TagsInput {
+    constructor(input) {
+        this.root = document.createElement("div");
+        this.tags = document.createElement("div");
+        this.input = document.createElement("input");
+        this.root.className = "tags-input";
+        this.tags.className = "tags";
+        this.checker = checkerForSeparator(input.getAttribute("data-separator"));
 
-const BACKSPACE = 8,
-    TAB = 9,
-    ENTER = 13,
-    LEFT = 37,
-    RIGHT = 39,
-    DELETE = 46;
+        copyAttributes(input, this.input);
 
-const COPY_PROPS = ["autocomplete", "disabled", "readonly", "type"];
-const MOVE_PROPS = ["accept", "accesskey", "autocapitalize", "autofocus", "dir", "inputmode",
-    "lang", "list", "max", "maxlength", "min", "minlength", "pattern", "placeholder", "size",
-    "spellcheck", "step", "tabindex", "title"];
+        this.input.addEventListener("focus", () => {
+            this.root.classList.add("focus");
+            this.select();
+        });
 
-function checkerForSeparator(separator) {
-    function simple(separator) {
-        return {
-            split: s => !s || !s.trim() ? [] : s.split(separator),
-            join: arr => arr.join(separator),
-            test: char => char === separator
-        };
+        this.input.addEventListener("blur", () => {
+            if (this.$(".tag.editing")) {
+                return;
+            }
+            this.root.classList.remove("focus");
+            this.select();
+            this.saveInput();
+        });
+
+        this.input.addEventListener("paste", () => setTimeout(this.saveInput.bind(this), 0));
+        this.input.addEventListener("keydown", (e) => this.handleInput(e));
+        this.root.addEventListener("mousedown", (e) => this.onFocus(e));
+        this.root.addEventListener("touchstart", (e) => this.onFocus(e));
+
+        this.tags.addEventListener("keydown", (e) => {
+            let key = e.keyCode,
+                separator = this.checker.test(e.key),
+                editedTag = e.target;
+            if (key === KEY_ENTER || separator) {
+                this.saveEditedTag(editedTag);
+            } else if (key == KEY_ESC) {
+                this.input.focus();
+            } else {
+                return;
+            }
+            e.preventDefault();
+            return false;
+        });
+
+        this.tags.addEventListener("focusout", (e) => {
+            let editedTag = e.target;
+            if (!this.saveEditedTag(editedTag)) {
+                editedTag.textContent = editedTag.dataset.tag;
+                this.select();
+            }
+        });
+
+        input.tabIndex = -1;
+        input.after(this.root);
+        this.root.appendChild(input);
+        this.root.appendChild(this.tags);
+        this.root.appendChild(this.input);
     }
 
-    function multi(separators) {
-        let regex = separators
-            .split("")
-            .map(escapeStringRegexp)
-            .join("|");
-
-        regex = new RegExp(regex);
-
-        return {
-            split: s => !s || !s.trim() ? [] : s.split(regex),
-            join: arr => arr.join(separators[0]),
-            test: char => regex.test(char)
-        };
+    $(selector) {
+        return this.root.querySelector(selector);
     }
 
-    return separator.length > 1 ? multi(separator) : simple(separator);
-}
-
-function createElement(type, name, text, attributes) {
-    let el = document.createElement(type);
-    if (name) el.className = name;
-    if (text) el.textContent = text;
-    for (let key in attributes) {
-        if (attributes.hasOwnProperty(key)) {
-            el.setAttribute(key, attributes[key]);
-        }
-    }
-    return el;
-}
-
-function insertAfter(child, el) {
-    return child.nextSibling ?
-        child.parentNode.insertBefore(el, child.nextSibling) :
-        child.parentNode.appendChild(el);
-}
-
-function caretAtStart(el) {
-    try {
-        return el.selectionStart === 0 && el.selectionEnd === 0;
-    }
-    catch (e) {
-        return el.value === "";
-    }
-}
-
-function charFromKeyboardEvent(e) {
-    return e.key;
-}
-
-const eachNode = "forEach" in NodeList.prototype ?
-    (nodeList, fn) => nodeList.forEach(fn) :
-    (nodeList, fn) => {
-        for (let i = 0; i < nodeList.length; i++) fn(nodeList[i]);
-    };
-
-export function TagsInput(input) {
-
-    function $(selector) {
-        return base.querySelector(selector);
+    $$(selector) {
+        return this.root.querySelectorAll(selector);
     }
 
-    function $$(selector) {
-        return base.querySelectorAll(selector);
+    get value() {
+        return Array.from(this.$$(".tag"), (t) => t.dataset.tag);
     }
 
-    function getValue() {
-        let value = [];
-        //if (base.input.value) value.push(base.input.value);
-        eachNode($$(".tag"), t => value.push(t.textContent));
-        return value;
-    }
-
-    function setValue(values) {
-        if (!values) {
+    set value(tags) {
+        if (!tags) {
             return;
         }
 
-        if (typeof values === "string") {
-            values = [values];
+        if (typeof tags === "string") {
+            tags = [tags];
         }
 
-        let container = document.createDocumentFragment();
-        let tagNode = document.createElement("span");
-        tagNode.className = "tag";
+        let fragment = document.createDocumentFragment();
+        let span = document.createElement("span");
+        span.className = "tag";
 
-        while (base.tags.hasChildNodes()) {
-            base.tags.removeChild(base.tags.lastChild);
+        while (this.tags.hasChildNodes()) {
+            this.tags.removeChild(this.tags.lastChild);
         }
 
-        for (let value of values) {
-            let clone = tagNode.cloneNode(false);
-            clone.textContent = value;
-            clone.dataset.tag = value;
-            container.appendChild(clone);
+        for (let tag of tags) {
+            let node = span.cloneNode(false);
+            node.textContent = tag;
+            node.dataset.tag = tag;
+            fragment.appendChild(node);
         }
 
-        base.tags.appendChild(container);
-        input.value = values.join();
+        this.tags.appendChild(fragment);
     }
 
-    function save() {
-        input.value = checker.join(getValue());
-        input.dispatchEvent(new Event("change", {"bubbles": true}));
+    get disabled() {
+        return this.input.disabled;
     }
 
-    function checkAllowDuplicates() {
-        const allow =
-            input.getAttribute("data-allow-duplicates") ||
-            input.getAttribute("duplicates");
-        return allow === "on" || allow === "1" || allow === "true";
+    set disabled(value) {
+        this.input.disabled = value;
     }
 
-    function getElementBefore(tag) {
-        for (let element of $$(".tag")) {
-            if (tag < element.dataset.tag) {
-                return element;
-            }
+    addTag(value, editedTag) {
+        let tag = value && value.trim();
+        if (!tag) {
+            return false;
         }
-        return null;
-    }
 
-    // Return false if no need to add a tag
-    function addTag(text, edited) {
-        let added = false;
-
-        function addOneTag(text) {
-            let tag = text && text.trim();
-            // Ignore if text is empty
-            if (!tag) return;
-
-            if (!base.input.checkValidity()) {
-                let editedTag = $(".tag.editing");
-                if (!editedTag) {
-                    base.classList.add("error");
-                    setTimeout(() => base.classList.remove("error"), 150);
-                } else {
-                    editedTag.classList.add("dupe");
-                    setTimeout(() => editedTag.classList.remove("dupe"), 100);
-                    base.input.value = "";
-                }
-                return;
-            }
-
-            // For duplicates, briefly highlight the existing tag
-            if (!allowDuplicates) {
-                let exisingTag = $(`[data-tag="${tag}"]`);
-                if (exisingTag) {
-                    exisingTag.classList.add("dupe");
-                    setTimeout(() => exisingTag.classList.remove("dupe"), 100);
-                    return;
-                }
-            }
-
-            let element = createElement("span", "tag", tag, {"data-tag": tag});
-
-            if (edited) {
-                base.tags.replaceChild(element, edited);
+        if (!this.input.checkValidity()) {
+            if (!editedTag) {
+                this.root.classList.add("error");
+                setTimeout(() => this.root.classList.remove("error"), 150);
             } else {
-                let before = getElementBefore(tag);
-                if (before != null) {
-                    base.tags.insertBefore(element, before);
-                } else {
-                    base.tags.appendChild(element);
-                }
+                editedTag.classList.add("error");
+                setTimeout(() => editedTag.classList.remove("error"), 100);
             }
-            added = true;
+            return false;
         }
 
-        // Add multiple tags if the user pastes in data with SEPERATOR already in it
-        checker.split(text).forEach(addOneTag);
+        // For duplicates, briefly highlight the existing tag
+        let duplicate = this.$(`[data-tag="${tag}"]`);
+        if (duplicate) {
+            duplicate.classList.add("duplicate");
+            setTimeout(() => duplicate.classList.remove("duplicate"), 100);
+            return false;
+        }
+
+        if (editedTag) {
+            editedTag.dataset.tag = tag;
+            editedTag.textContent = tag;
+        } else {
+            let element = document.createElement("span");
+            element.className = "tag";
+            element.textContent = tag;
+            element.dataset.tag = tag;
+
+            let before = this.getElementBefore(tag);
+
+            if (before != null) {
+                this.tags.insertBefore(element, before);
+            } else {
+                this.tags.appendChild(element);
+            }
+        }
+        return true;
+    }
+
+    saveInput() {
+        let added = this.checker
+            .split(this.input.value)
+            .map((t) => this.addTag(t))
+            .includes(true);
+
+        if (added) {
+            this.input.value = "";
+            this.notify();
+        }
         return added;
     }
 
-    function select(el) {
-        let sel = $(".selected");
+    saveEditedTag(tag) {
+        if (tag.textContent === tag.dataset.tag) {
+            this.select();
+            return true;
+        }
+        if (!tag.textContent) {
+            this.tags.removeChild(tag);
+            this.notify();
+            this.input.focus();
+            return true;
+        }
+        // use input field temporarely for tag validation
+        let input = this.input.value;
+        this.input.value = tag.textContent;
+        let added = this.addTag(tag.textContent, tag);
+        if (added) {
+            this.select();
+            this.notify();
+            this.input.focus();
+        }
+        this.input.value = input;
+        return added;
+    }
+
+    onFocus(e) {
+        if (e.target.classList.contains("tag")) {
+            if (e.target.classList.contains("selected")) {
+                e.target.classList.add("editing");
+                return;
+            } else {
+                // focus base.input to capture input
+                this.input.focus();
+            }
+            this.select(e.target);
+            e.preventDefault();
+            return false;
+        } else if (e.target === this.input) {
+            this.select();
+        }
+    }
+
+    handleInput(e) {
+        let key = e.keyCode,
+            separator = this.checker.test(e.key),
+            selectedTag = this.$(".tag.selected"),
+            lastTag = this.$(".tag:last-of-type");
+
+        if (key === KEY_ENTER && selectedTag) {
+            selectedTag.classList.add("editing");
+            selectedTag.focus();
+        } else if (key === KEY_ENTER || separator) {
+            this.saveInput();
+        } else if (key === KEY_DELETE && selectedTag) {
+            if (selectedTag !== lastTag) this.select(selectedTag.nextSibling);
+            this.tags.removeChild(selectedTag);
+            this.notify();
+        } else if (key === KEY_LEFT) {
+            if (selectedTag && selectedTag.previousSibling) {
+                this.select(selectedTag.previousSibling);
+            } else if (caretAtStart(this.input)) {
+                this.select(lastTag);
+            } else {
+                return;
+            }
+        } else if (key === KEY_RIGHT && selectedTag) {
+            this.select(selectedTag.nextSibling);
+        } else {
+            return this.select();
+        }
+
+        e.preventDefault();
+        return false;
+    }
+
+    select(el) {
+        let sel = this.$(".selected");
         if (sel) {
             sel.classList.remove("selected");
             sel.classList.remove("editing");
@@ -212,207 +257,104 @@ export function TagsInput(input) {
         }
     }
 
-    function savePartialInput(value, edited) {
-        if (typeof value !== "string" && !Array.isArray(value)) {
-            // If the base input does not contain a value, default to the original element passed
-            value = base.input.value;
-        }
-        if (addTag(value, edited) !== false) {
-            base.input.value = "";
-            save();
-            return true;
-        }
-        return false;
+    notify() {
+        this.input.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
-    function saveTagEdit(tag) {
-        if (tag.textContent === tag.dataset.tag) {
-            tag.blur();
-            select();
-            return true;
+    getElementBefore(tag) {
+        for (let element of this.$$(".tag")) {
+            if (tag < element.dataset.tag) {
+                return element;
+            }
         }
-        base.input.value = tag.textContent;
-        let saved = savePartialInput(tag.textContent, tag);
-        base.input.value = "";
-        return saved;
+        return null;
+    }
+}
+
+const COPY_ATTRIBUTES = ["autocomplete", "disabled", "readonly", "type"];
+const MOVE_ATTRIBUTES = [
+    "accept",
+    "accesskey",
+    "autocapitalize",
+    "autofocus",
+    "dir",
+    "inputmode",
+    "lang",
+    "list",
+    "max",
+    "maxlength",
+    "min",
+    "minlength",
+    "pattern",
+    "placeholder",
+    "size",
+    "spellcheck",
+    "step",
+    "tabindex",
+    "title",
+];
+
+function copyAttributes(from, to) {
+    COPY_ATTRIBUTES.forEach((attr) => {
+        if (from.hasAttribute(attr)) {
+            to.setAttribute(attr, from.getAttribute(attr));
+        }
+    });
+
+    MOVE_ATTRIBUTES.forEach((attr) => {
+        if (from.hasAttribute(attr)) {
+            to.setAttribute(attr, from.getAttribute(attr));
+            from.removeAttribute(attr);
+        }
+    });
+}
+
+const REGEX_OPERATORS = /[|\\{}()[\]^$+*?.]/g;
+
+function escapeRegexpOperators(str) {
+    return str.replace(REGEX_OPERATORS, "\\$&");
+}
+
+function checkerForSeparator(separator) {
+    function noSeparator() {
+        return {
+            split: (s) => (!s || !s.trim() ? [] : [s]),
+            join: (arr) => arr.join(""),
+            test: () => false,
+        };
     }
 
-    function refocus(e) {
-        if (e.target.classList.contains("tag")) {
-            if (e.target.classList.contains("selected")) {
-                e.target.classList.add("editing");
-                return;
-            } else {
-                // focus base.input to capture input
-                base.input.focus();
-            }
-            select(e.target);
-            e.preventDefault();
-            return false;
-        } else {
-            base.input.select();
-            if (e.target === base.input) {
-                return select();
-            } else {
-                e.preventDefault();
-                return false;
-            }
-        }
+    function simple(separator) {
+        return {
+            split: (s) => (!s || !s.trim() ? [] : s.split(separator)),
+            join: (arr) => arr.join(separator),
+            test: (char) => char === separator,
+        };
     }
 
-    const base = createElement("div", "tags-input card"),
-        checker = checkerForSeparator(input.getAttribute("data-separator") || ","),
-        allowDuplicates = checkAllowDuplicates();
+    function multi(separators) {
+        let regex = separators.split("").map(escapeRegexpOperators).join("|");
 
-    let inputType = input.getAttribute("type");
-    if (!inputType || inputType === "tags") {
-        input.setAttribute("type", "text");
-    }
-    base.input = createElement("input");
-    COPY_PROPS.forEach(prop => {
-        if (input.hasAttribute(prop)) {
-            base.input.setAttribute(prop, input.getAttribute(prop));
-        }
-    });
-    MOVE_PROPS.forEach(prop => {
-        if (input.hasAttribute(prop)) {
-            base.input.setAttribute(prop, input.getAttribute(prop));
-            input.removeAttribute(prop);
-        }
-    });
+        regex = new RegExp(regex);
 
-    input.setAttribute("type", "text");
-    input.tabIndex = -1;
-
-    input.addEventListener("focus", () => {
-        base.input.focus();
-    });
-
-    base.input.addEventListener("focus", () => {
-        base.classList.add("focus");
-        select();
-    });
-
-    base.input.addEventListener("blur", () => {
-        if ($(".tag.editing")) {
-            return;
-        }
-        base.classList.remove("focus");
-        select();
-        savePartialInput();
-    });
-
-    base.input.addEventListener("keydown", e => {
-        let el = base.input,
-            key = e.keyCode || e.which,
-            separator = checker.test(charFromKeyboardEvent(e)),
-            selectedTag = $(".tag.selected"),
-            lastTag = $(".tag:last-of-type");
-
-        if (key === ENTER || key === TAB || separator) {
-            if (!el.value && !separator) return;
-            savePartialInput();
-        }
-        else if (key === DELETE && selectedTag) {
-            if (selectedTag !== lastTag) select(selectedTag.nextSibling);
-            base.tags.removeChild(selectedTag);
-            save();
-        }
-        else if (key === BACKSPACE) {
-            if (selectedTag) {
-                select(selectedTag.previousSibling);
-                base.tags.removeChild(selectedTag);
-                save();
-            }
-            else if (lastTag && caretAtStart(el)) {
-                select(lastTag);
-            }
-            else {
-                return;
-            }
-        }
-        else if (key === LEFT) {
-            if (selectedTag) {
-                if (selectedTag.previousSibling) {
-                    select(selectedTag.previousSibling);
-                }
-            }
-            else if (!caretAtStart(el)) {
-                return;
-            }
-            else {
-                select(lastTag);
-            }
-        }
-        else if (key === RIGHT) {
-            if (!selectedTag) return;
-            select(selectedTag.nextSibling);
-        }
-        else {
-            return select();
-        }
-
-        e.preventDefault();
-        return false;
-    });
-
-    // Proxy "input" (live change) events , update the first tag live as the user types
-    // This means that users who only want one thing don't have to enter commas
-    base.input.addEventListener("input", () => {
-        //input.value = getValue();
-        input.dispatchEvent(new Event("input"));
-    });
-
-    // One tick after pasting, parse pasted text as CSV:
-    base.input.addEventListener("paste", () => setTimeout(savePartialInput, 0));
-
-    base.addEventListener("mousedown", refocus);
-    base.addEventListener("touchstart", refocus);
-
-    base.setValue = setValue;
-    base.getValue = getValue;
-
-    function setDisabled() {
-        base.input.setAttribute("disabled", "disabled");
-        input.setAttribute("disabled", "disabled");
+        return {
+            split: (s) => (!s || !s.trim() ? [] : s.split(regex)),
+            join: (arr) => arr.join(separators[0]),
+            test: (char) => regex.test(char),
+        };
     }
 
-    function setEnabled() {
-        base.input.removeAttribute("disabled");
-        input.removeAttribute("disabled");
+    if (!separator) {
+        return noSeparator();
     }
 
-    base.enable = setEnabled;
-    base.disable = setDisabled;
+    return separator.length > 1 ? multi(separator) : simple(separator);
+}
 
-    base.tags = createElement("div");
-    base.tags.className = "tags";
-    base.tags.addEventListener("keydown", function (e) {
-        let key = e.keyCode || e.which,
-            separator = checker.test(charFromKeyboardEvent(e)),
-            editedTag = e.target;
-        if (key === ENTER || key === TAB || separator) {
-            if (editedTag.textContent === editedTag.dataset.tag) {
-                select();
-            } else {
-                saveTagEdit(editedTag);
-            }
-            e.preventDefault();
-            return false;
-        }
-    });
-    base.tags.addEventListener("focusout", function (e) {
-        let editedTag = e.target;
-        if (!saveTagEdit(editedTag)) {
-            editedTag.textContent = editedTag.dataset.tag;
-            select();
-        }
-    });
-
-    base.appendChild(base.tags);
-    base.appendChild(base.input);
-    insertAfter(input, base);
-    base.insertBefore(input, base.tags);
-
-    return base;
+function caretAtStart(el) {
+    try {
+        return el.selectionStart === 0 && el.selectionEnd === 0;
+    } catch (e) {
+        return el.value === "";
+    }
 }

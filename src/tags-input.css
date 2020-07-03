@@ -28,6 +28,11 @@
     color: #111;
 }
 
+.tags-input .tag::after {
+    content: "\200B";
+    display: inline-block;
+}
+
 .tags-input .tag[contenteditable] {
     cursor: auto;
     text-decoration-style: dashed;
@@ -44,7 +49,8 @@
     color: black;
 }
 
-.tags-input .dupe {
+.tags-input .duplicate,
+.tags-input .tag.error {
     background-color: #FCC;
     border-color: #700;
 }
