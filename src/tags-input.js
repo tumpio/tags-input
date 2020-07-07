@@ -110,6 +110,7 @@ export class TagsInput {
     }
 
     set disabled(value) {
+        this.baseInput.disabled = value;
         this.input.disabled = value;
     }
 
