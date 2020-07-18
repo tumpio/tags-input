@@ -4,39 +4,71 @@ const KEY_ENTER = 13,
     KEY_RIGHT = 39,
     KEY_DELETE = 46;
 
-export class TagsInput {
-    constructor(input) {
-        this.root = document.createElement("div");
-        this.tags = document.createElement("div");
-        this.input = document.createElement("input");
-        this.root.className = "tags-input";
-        this.tags.className = "tags";
-        this.checker = checkerForSeparator(input.getAttribute("data-separator"));
-        this.baseInput = input;
+const COPY_ATTRIBUTES = ["autocomplete", "disabled", "readonly", "type"];
+const MOVE_ATTRIBUTES = [
+    "accept",
+    "accesskey",
+    "autocapitalize",
+    "autofocus",
+    "dir",
+    "inputmode",
+    "lang",
+    "list",
+    "max",
+    "maxlength",
+    "min",
+    "minlength",
+    "pattern",
+    "placeholder",
+    "size",
+    "spellcheck",
+    "step",
+    "tabindex",
+    "title",
+];
 
-        copyAttributes(input, this.input);
+const REGEX_OPERATORS = /[|\\{}()[\]^$+*?.]/g;
+
+export class TagsInput extends HTMLInputElement {
+    constructor() {
+        super();
+
+        const div = document.createElement("div");
+
+        this.tagsNode = document.createElement("div");
+        this.input = document.createElement("input");
+
+        div.className = "tags-input";
+        this.tagsNode.className = "tags";
+        this.checker = checkerForSeparator(this.getAttribute("data-separator"));
+
+        copyAttributes(this, this.input);
 
         this.input.addEventListener("focus", () => {
-            this.root.classList.add("focus");
+            div.classList.add("focus");
             this.select();
         });
 
+        this.addEventListener("focus", () => this.input.focus());
+
         this.input.addEventListener("blur", () => {
-            if (this.$(".tag.editing")) {
+            if (this.tagsNode.querySelector(".editing")) {
                 return;
             }
-            this.root.classList.remove("focus");
+            div.classList.remove("focus");
             this.select();
             this.saveInput();
         });
 
+        this.addEventListener("blur", () => this.input.blur());
+
         this.input.addEventListener("paste", () => setTimeout(this.saveInput.bind(this), 0));
         this.input.addEventListener("keydown", (e) => this.handleInput(e));
-        this.root.addEventListener("mousedown", (e) => this.onFocus(e));
-        this.root.addEventListener("touchstart", (e) => this.onFocus(e));
+        div.addEventListener("mousedown", (e) => this.onFocus(e));
+        div.addEventListener("touchstart", (e) => this.onFocus(e));
 
-        this.tags.addEventListener("keydown", (e) => {
-            let key = e.keyCode,
+        this.tagsNode.addEventListener("keydown", (e) => {
+            const key = e.keyCode,
                 separator = this.checker.test(e.key),
                 editedTag = e.target;
             if (key === KEY_ENTER || separator) {
@@ -50,34 +82,24 @@ export class TagsInput {
             return false;
         });
 
-        this.tags.addEventListener("focusout", (e) => {
-            let editedTag = e.target;
+        this.tagsNode.addEventListener("focusout", (e) => {
+            const editedTag = e.target;
             if (!this.saveEditedTag(editedTag)) {
                 editedTag.textContent = editedTag.dataset.tag;
                 this.select();
             }
         });
 
-        input.tabIndex = -1;
-        input.after(this.root);
-        this.root.appendChild(input);
-        this.root.appendChild(this.tags);
-        this.root.appendChild(this.input);
+        this.tabIndex = -1;
+        this.after(div);
+        div.append(this, this.tagsNode, this.input);
     }
 
-    $(selector) {
-        return this.root.querySelector(selector);
+    get tags() {
+        return Array.from(this.tagsNode.childNodes, (t) => t.dataset.tag);
     }
 
-    $$(selector) {
-        return this.root.querySelectorAll(selector);
-    }
-
-    get value() {
-        return Array.from(this.$$(".tag"), (t) => t.dataset.tag);
-    }
-
-    set value(tags) {
+    set tags(tags) {
         if (!tags) {
             return;
         }
@@ -86,23 +108,23 @@ export class TagsInput {
             tags = [tags];
         }
 
-        let fragment = document.createDocumentFragment();
-        let span = document.createElement("span");
+        const fragment = document.createDocumentFragment();
+        const span = document.createElement("span");
         span.className = "tag";
 
-        while (this.tags.hasChildNodes()) {
-            this.tags.removeChild(this.tags.lastChild);
+        while (this.tagsNode.hasChildNodes()) {
+            this.tagsNode.lastChild.remove();
         }
 
-        for (let tag of tags) {
-            let node = span.cloneNode(false);
+        tags.forEach((tag) => {
+            const node = span.cloneNode(false);
             node.textContent = tag;
             node.dataset.tag = tag;
             fragment.appendChild(node);
-        }
+        });
 
-        this.tags.appendChild(fragment);
-        this.baseInput.value = tags.join();
+        this.tagsNode.appendChild(fragment);
+        this.value = tags.join();
     }
 
     get disabled() {
@@ -110,20 +132,20 @@ export class TagsInput {
     }
 
     set disabled(value) {
-        this.baseInput.disabled = value;
+        this.disabled = value;
         this.input.disabled = value;
     }
 
     addTag(value, editedTag) {
-        let tag = value && value.trim();
+        const tag = value && value.trim();
         if (!tag) {
             return false;
         }
 
         if (!this.input.checkValidity()) {
             if (!editedTag) {
-                this.root.classList.add("error");
-                setTimeout(() => this.root.classList.remove("error"), 150);
+                this.parentNode.classList.add("error");
+                setTimeout(() => this.parentNode.classList.remove("error"), 150);
             } else {
                 editedTag.classList.add("error");
                 setTimeout(() => editedTag.classList.remove("error"), 100);
@@ -132,7 +154,7 @@ export class TagsInput {
         }
 
         // For duplicates, briefly highlight the existing tag
-        let duplicate = this.$(`[data-tag="${tag}"]`);
+        const duplicate = this.tagsNode.querySelector(`[data-tag="${tag}"]`);
         if (duplicate) {
             duplicate.classList.add("duplicate");
             setTimeout(() => duplicate.classList.remove("duplicate"), 100);
@@ -143,24 +165,24 @@ export class TagsInput {
             editedTag.dataset.tag = tag;
             editedTag.textContent = tag;
         } else {
-            let element = document.createElement("span");
+            const element = document.createElement("span");
             element.className = "tag";
             element.textContent = tag;
             element.dataset.tag = tag;
 
-            let before = this.getElementBefore(tag);
+            const before = this.getElementBefore(tag);
 
             if (before != null) {
-                this.tags.insertBefore(element, before);
+                this.tagsNode.insertBefore(element, before);
             } else {
-                this.tags.appendChild(element);
+                this.tagsNode.appendChild(element);
             }
         }
         return true;
     }
 
     saveInput() {
-        let added = this.checker
+        const added = this.checker
             .split(this.input.value)
             .map((t) => this.addTag(t))
             .includes(true);
@@ -178,15 +200,15 @@ export class TagsInput {
             return true;
         }
         if (!tag.textContent) {
-            this.tags.removeChild(tag);
+            tag.remove();
             this.notify();
             this.input.focus();
             return true;
         }
         // use input field temporarely for tag validation
-        let input = this.input.value;
+        const input = this.input.value;
         this.input.value = tag.textContent;
-        let added = this.addTag(tag.textContent, tag);
+        const added = this.addTag(tag.textContent, tag);
         if (added) {
             this.select();
             this.notify();
@@ -214,10 +236,10 @@ export class TagsInput {
     }
 
     handleInput(e) {
-        let key = e.keyCode,
+        const key = e.keyCode,
             separator = this.checker.test(e.key),
-            selectedTag = this.$(".tag.selected"),
-            lastTag = this.$(".tag:last-of-type");
+            selectedTag = this.tagsNode.querySelector(".selected"),
+            lastTag = this.tagsNode.lastElementChild;
 
         if (key === KEY_ENTER && selectedTag) {
             selectedTag.classList.add("editing");
@@ -225,7 +247,7 @@ export class TagsInput {
         } else if (key === KEY_ENTER || separator) {
             this.saveInput();
         } else if (key === KEY_DELETE && selectedTag) {
-            this.tags.removeChild(selectedTag);
+            selectedTag.remove();
             this.notify();
         } else if (key === KEY_LEFT) {
             if (selectedTag && selectedTag.previousSibling) {
@@ -246,7 +268,7 @@ export class TagsInput {
     }
 
     select(el) {
-        let sel = this.$(".selected");
+        const sel = this.tagsNode.querySelector(".selected");
         if (sel) {
             sel.classList.remove("selected");
             sel.classList.remove("editing");
@@ -260,12 +282,12 @@ export class TagsInput {
     }
 
     notify() {
-        this.baseInput.value = this.checker.join(this.value);
+        this.value = this.checker.join(this.tags);
         this.input.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
     getElementBefore(tag) {
-        for (let element of this.$$(".tag")) {
+        for (const element of this.tagsNode.childNodes) {
             if (tag < element.dataset.tag) {
                 return element;
             }
@@ -274,28 +296,7 @@ export class TagsInput {
     }
 }
 
-const COPY_ATTRIBUTES = ["autocomplete", "disabled", "readonly", "type"];
-const MOVE_ATTRIBUTES = [
-    "accept",
-    "accesskey",
-    "autocapitalize",
-    "autofocus",
-    "dir",
-    "inputmode",
-    "lang",
-    "list",
-    "max",
-    "maxlength",
-    "min",
-    "minlength",
-    "pattern",
-    "placeholder",
-    "size",
-    "spellcheck",
-    "step",
-    "tabindex",
-    "title",
-];
+customElements.define("tags-input", TagsInput, { extends: "input" });
 
 function copyAttributes(from, to) {
     COPY_ATTRIBUTES.forEach((attr) => {
@@ -311,8 +312,6 @@ function copyAttributes(from, to) {
         }
     });
 }
-
-const REGEX_OPERATORS = /[|\\{}()[\]^$+*?.]/g;
 
 function escapeRegexpOperators(str) {
     return str.replace(REGEX_OPERATORS, "\\$&");
@@ -336,9 +335,7 @@ function checkerForSeparator(separator) {
     }
 
     function multi(separators) {
-        let regex = separators.split("").map(escapeRegexpOperators).join("|");
-
-        regex = new RegExp(regex);
+        const regex = new RegExp(separators.split("").map(escapeRegexpOperators).join("|"));
 
         return {
             split: (s) => (!s || !s.trim() ? [] : s.split(regex)),
