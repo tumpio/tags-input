@@ -127,13 +127,14 @@ export class TagsInput extends HTMLInputElement {
         this.value = tags.join();
     }
 
-    get disabled() {
-        return this.input.disabled;
+    static get observedAttributes() {
+        return ["disabled"];
     }
 
-    set disabled(value) {
-        this.disabled = value;
-        this.input.disabled = value;
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === "disabled") {
+            this.input.disabled = newValue !== null;
+        }
     }
 
     addTag(value, editedTag) {
