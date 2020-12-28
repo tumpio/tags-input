@@ -73,7 +73,7 @@ export class TagsInput extends HTMLInputElement {
                 editedTag = e.target;
             if (key === KEY_ENTER || separator) {
                 this.saveEditedTag(editedTag);
-            } else if (key == KEY_ESC) {
+            } else if (key === KEY_ESC) {
                 this.input.focus();
             } else {
                 return;
@@ -224,10 +224,10 @@ export class TagsInput extends HTMLInputElement {
             if (e.target.classList.contains("selected")) {
                 e.target.classList.add("editing");
                 return;
-            } else {
-                // focus base.input to capture input
-                this.input.focus();
-            }
+            } 
+            // focus base.input to capture input
+            this.input.focus();
+            
             this.select(e.target);
             e.preventDefault();
             return false;
@@ -355,7 +355,7 @@ function checkerForSeparator(separator) {
 function caretAtStart(el) {
     try {
         return el.selectionStart === 0 && el.selectionEnd === 0;
-    } catch (e) {
+    } catch {
         return el.value === "";
     }
 }
