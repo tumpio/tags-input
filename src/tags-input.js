@@ -27,7 +27,7 @@ const MOVE_ATTRIBUTES = [
     "title",
 ];
 
-const REGEX_OPERATORS = /[|\\{}()[\]^$+*?.]/g;
+const REGEX_OPERATORS = /[$()*+.?[\\\]^{|}]/g;
 
 export class TagsInput extends HTMLInputElement {
     constructor() {
@@ -317,33 +317,33 @@ function escapeRegexpOperators(str) {
     return str.replace(REGEX_OPERATORS, "\\$&");
 }
 
+function noSeparator() {
+    return {
+        split: (s) => (!s || !s.trim() ? [] : [s]),
+        join: (arr) => arr.join(""),
+        test: () => false,
+    };
+}
+
+function simple(separator) {
+    return {
+        split: (s) => (!s || !s.trim() ? [] : s.split(separator)),
+        join: (arr) => arr.join(separator),
+        test: (char) => char === separator,
+    };
+}
+
+function multi(separators) {
+    const regex = new RegExp(separators.split("").map(escapeRegexpOperators).join("|"));
+
+    return {
+        split: (s) => (!s || !s.trim() ? [] : s.split(regex)),
+        join: (arr) => arr.join(separators[0]),
+        test: (char) => regex.test(char),
+    };
+}
+
 function checkerForSeparator(separator) {
-    function noSeparator() {
-        return {
-            split: (s) => (!s || !s.trim() ? [] : [s]),
-            join: (arr) => arr.join(""),
-            test: () => false,
-        };
-    }
-
-    function simple(separator) {
-        return {
-            split: (s) => (!s || !s.trim() ? [] : s.split(separator)),
-            join: (arr) => arr.join(separator),
-            test: (char) => char === separator,
-        };
-    }
-
-    function multi(separators) {
-        const regex = new RegExp(separators.split("").map(escapeRegexpOperators).join("|"));
-
-        return {
-            split: (s) => (!s || !s.trim() ? [] : s.split(regex)),
-            join: (arr) => arr.join(separators[0]),
-            test: (char) => regex.test(char),
-        };
-    }
-
     if (!separator) {
         return noSeparator();
     }
