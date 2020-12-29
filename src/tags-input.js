@@ -1,8 +1,8 @@
-const KEY_ENTER = 13,
-    KEY_ESC = 27,
-    KEY_LEFT = 37,
-    KEY_RIGHT = 39,
-    KEY_DELETE = 46;
+const KEY_ENTER = "Enter",
+    KEY_ESC = "Escape",
+    KEY_LEFT = "ArrowLeft",
+    KEY_RIGHT = "ArrowRight",
+    KEY_DELETE = "Delete";
 
 const COPY_ATTRIBUTES = ["autocomplete", "disabled", "readonly", "type"];
 const MOVE_ATTRIBUTES = [
@@ -68,11 +68,10 @@ export class TagsInput extends HTMLInputElement {
         div.addEventListener("touchstart", (e) => this.onFocus(e));
 
         this.tagsNode.addEventListener("keydown", (e) => {
-            const key = e.keyCode,
-                separator = this.checker.test(e.key),
-                editedTag = e.target;
+            const { key, target } = e,
+                separator = this.checker.test(key);
             if (key === KEY_ENTER || separator) {
-                this.saveEditedTag(editedTag);
+                this.saveEditedTag(target);
             } else if (key === KEY_ESC) {
                 this.input.focus();
             } else {
@@ -224,10 +223,10 @@ export class TagsInput extends HTMLInputElement {
             if (e.target.classList.contains("selected")) {
                 e.target.classList.add("editing");
                 return;
-            } 
+            }
             // focus base.input to capture input
             this.input.focus();
-            
+
             this.select(e.target);
             e.preventDefault();
             return false;
@@ -237,8 +236,8 @@ export class TagsInput extends HTMLInputElement {
     }
 
     handleInput(e) {
-        const key = e.keyCode,
-            separator = this.checker.test(e.key),
+        const { key } = e,
+            separator = this.checker.test(key),
             selectedTag = this.tagsNode.querySelector(".selected"),
             lastTag = this.tagsNode.lastElementChild;
 
