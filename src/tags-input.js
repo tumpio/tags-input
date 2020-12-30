@@ -283,7 +283,7 @@ export class TagsInput extends HTMLInputElement {
 
     notify() {
         this.value = this.checker.join(this.tags);
-        this.input.dispatchEvent(new Event("change", { bubbles: true }));
+        this.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
     getElementBefore(tag) {
