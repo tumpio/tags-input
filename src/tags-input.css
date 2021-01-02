@@ -33,7 +33,7 @@
     display: inline-block;
 }
 
-.tags-input .tag[contenteditable] {
+.tags-input .tag[contenteditable=true] {
     cursor: auto;
     text-decoration-style: dashed;
 }

@@ -41,6 +41,7 @@ export class TagsInput extends HTMLInputElement {
         div.className = "tags-input";
         this.tagsNode.className = "tags";
         this.checker = checkerForSeparator(this.getAttribute("data-separator"));
+        this.editOnly = this.dataset.editOnly === "true"; // disables tag select mode
 
         copyAttributes(this, this.input);
 
@@ -110,6 +111,8 @@ export class TagsInput extends HTMLInputElement {
         const fragment = document.createDocumentFragment();
         const span = document.createElement("span");
         span.className = "tag";
+        span.classList.toggle("editing", this.editOnly);
+        span.setAttribute("contenteditable", this.editOnly);
 
         while (this.tagsNode.hasChildNodes()) {
             this.tagsNode.lastChild.remove();
@@ -169,6 +172,8 @@ export class TagsInput extends HTMLInputElement {
             element.className = "tag";
             element.textContent = tag;
             element.dataset.tag = tag;
+            element.classList.toggle("editing", this.editOnly);
+            element.setAttribute("contenteditable", this.editOnly);
 
             const before = this.getElementBefore(tag);
 
@@ -220,6 +225,9 @@ export class TagsInput extends HTMLInputElement {
 
     onFocus(e) {
         if (e.target.classList.contains("tag")) {
+            if (this.editOnly) {
+                return;
+            }
             if (e.target.classList.contains("selected")) {
                 e.target.classList.add("editing");
                 return;
@@ -268,6 +276,9 @@ export class TagsInput extends HTMLInputElement {
     }
 
     select(el) {
+        if (this.editOnly) {
+            return;
+        }
         const sel = this.tagsNode.querySelector(".selected");
         if (sel) {
             sel.classList.remove("selected");
